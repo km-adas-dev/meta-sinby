@@ -25,11 +25,10 @@ OOT_KERNEL_DEVICETREE ?= "${@expand_dir_basepaths_by_extension("MACHINE_DEVICETR
 FILESEXTRAPATHS_append := "${@get_additional_bbpath_filespath('conf/machine/boards', d)}"
 
 # Using the MACHINE_DEVICETREE and MACHINE_KCONFIG vars, append them to SRC_URI
-SRC_URI_append += " \
+SRC_URI_append ?= " \
 		${@paths_affix(d.getVar("MACHINE_DEVICETREE", True) or '', prefix = 'file://')} \
 		${@paths_affix(d.getVar("MACHINE_KCONFIG", True) or '', prefix = 'file://')} \
 		"
-
 # Copy all device tree's into the same directory. This is due to compatibility
 # with dtc and the use of DTSI (Device Tree Includes), the version of DTC in
 # Yocto does not provide include path support.
