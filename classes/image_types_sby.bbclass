@@ -19,7 +19,7 @@ BOOT_SPACE ?= "8192"
 IMAGE_ROOTFS_ALIGNMENT = "4096"
 
 IMAGE_DEPENDS_sdcard = "parted-native dosfstools-native mtools-native \
-                        virtual/kernel ${IMAGE_BOOTLOADER}"
+                        virtual/kernel ${IMAGE_BOOTLOADER} linux-xlnx"
 
 SDCARD = "${DEPLOY_DIR_IMAGE}/${IMAGE_NAME}.rootfs.sdcard"
 
@@ -115,6 +115,7 @@ IMAGE_CMD_sdcardy () {
 }
 
 IMAGE_CMD_sdcard () {
+	echo ${BB_CURRENTTASK} >> /tmp/tas.tk
 	if [ -z "${SDCARD_ROOTFS}" ]; then
 		bberror "SDCARD_ROOTFS is undefined. To use sdcard image from Freescale's BSP it needs to be defined."
 		exit 1
@@ -148,13 +149,38 @@ python make_zynq_dos_image() {
 	#rv = bootgen.strip_bit(bit_file, bit_file_bin)
 }
 
-addtask sinby_test before do_configure
+#addtask sinby_test before do_configure
 do_sinby_test() {
 }
 
+inherit xilinx-utils
+
+SBY_ZYNQ_SDCARD_TMP ?= "${WORKDIR}/zynq_sdcard_tmp"
+MACHINE_DEVICETREE ?= "zc702_devicetree_hdmi.dts"
+OOT_KERNEL_DEVICETREE ?= "${@expand_dir_basepaths_by_extension("MACHINE_DEVICETREE", os.path.join(d.getVar("WORKDIR", True), 'devicetree'), '.dts', d)}"
+
 make_zynq_dos_image_sh() {
-	echo ${HOST_PREFIX}objcopy -O binary ${FSBL_ELF} ${FSBL_ELF}.bin > /tmp/jgeil.txt
+	echo xmake_zynq_dos_image_sh:${HOST_PREFIX}objcopy -O binary ${FSBL_ELF} ${FSBL_ELF}.bin > /tmp/jgeil.txt
+	if [ ! -e ${SBY_ZYNQ_SDCARD_TMP} ] ; then
+		mkdir ${SBY_ZYNQ_SDCARD_TMP}
+	fi
+	pwd >> /tmp/jgeil.txt
+	echo OOT_KERNEL_DEVICETREE:${OOT_KERNEL_DEVICETREE} >> /tmp/jgeil.txt
+	echo BB_CURRENTTASK:${BB_CURRENTTASK} >> /tmp/jgeil.txt
+	if test -n "${OOT_KERNEL_DEVICETREE}"; then
+		for DTS_FILE in ${OOT_KERNEL_DEVICETREE}; do
+			DTS_BASE_NAME=`basename ${DTS_FILE} | awk -F "." '{print $1}'`
+			echo DTS_FILE:${DTS_FILE} ${DTS_BASE_NAME} >> /tmp/jgeil.txt
+			dtc -I dts -O dtb ${OOT_KERNEL_DEVICETREE_FLAGS} -o ${DTS_BASE_NAME} ${DTS_FILE}
+		done
+	fi
+			
 	echo /tmp/zynq* >> /tmp/jgeil.txt
+	echo S:${B} >> /tmp/jgeil.txt
+	echo B:${S} >> /tmp/jgeil.txt
+	echo D:${D} >> /tmp/jgeil.txt
+	echo WORKDIR:${WORKDIR} >> /tmp/jgeil.txt
+	echo DEPLOY_DIR_IMAGE:${DEPLOY_DIR_IMAGE} >> /tmp/jgeil.txt
 }
 
 do_sinby_test[prefuncs] += "make_zynq_dos_image_sh make_zynq_dos_image"
