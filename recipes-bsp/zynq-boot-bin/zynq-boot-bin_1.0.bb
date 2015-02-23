@@ -41,20 +41,31 @@ python do_deploy () {
     uboot_elf_path = "${DEPLOY_DIR_IMAGE}/${ZYNQ_APP_ELF}"
     uboot_elf_bin = uboot_elf_path + ".bin"
     
-    rv = os.system("arm-none-linux-gnueabi-objcopy -O binary %s %s" % (fsbl_zynq_elf_path, fsbl_zynq_elf_bin))
-    if rv != 0 :
-        bb.error("I cannot convert from %s to %s" % (fsbl_zynq_elf_path, fsbl_zynq_elf_bin))
-        return
+    #rv = os.system("arm-none-linux-gnueabi-objcopy -O binary %s %s" % (fsbl_zynq_elf_path, fsbl_zynq_elf_bin))
+    #if rv != 0 :
+    #    bb.error("I cannot convert from %s to %s" % (fsbl_zynq_elf_path, fsbl_zynq_elf_bin))
+    #    return
+
+    objcopy = "${HOST_PREFIX}objcopy"
+    cmd = "%s -O binary %s %s" % (objcopy, fsbl_zynq_elf_path, fsbl_zynq_elf_bin)
+    (retval, output) = oe.utils.getstatusoutput(cmd)
+    if retval:
+        bb.fatal("objcopy failed with exit code %s (cmd was %s)%s" % (retval, cmd, ":\n%s" % output if output else ""))
 
     rv = bootgen.strip_bit("system.bit", system_bit_bin)
     if rv == False :
-        bb.error("I cannot convert from %s to %s" % (system_bit_path, system_bit_bin))
+        bb.fatal("bootgen.strip_bit failed from %s to %s" % (system_bit_path, system_bit_bin))
         return
 
-    rv = os.system("arm-none-linux-gnueabi-objcopy -O binary %s %s" % (uboot_elf_path, uboot_elf_bin))
-    if rv != 0 :
-        bb.error("I cannot convert from %s to %s" % (uboot_elf_path, uboot_elf_bin))
-        return
+    #rv = os.system("arm-none-linux-gnueabi-objcopy -O binary %s %s" % (uboot_elf_path, uboot_elf_bin))
+    #if rv != 0 :
+    #    bb.error("I cannot convert from %s to %s" % (uboot_elf_path, uboot_elf_bin))
+    #    return
+
+    cmd = "%s -O binary %s %s" % (objcopy, uboot_elf_path, uboot_elf_bin)
+    (retval, output) = oe.utils.getstatusoutput(cmd)
+    if retval:
+        bb.fatal("objcopy failed with exit code %s (cmd was %s)%s" % (retval, cmd, ":\n%s" % output if output else ""))
 
     start_address = bootgen.get_start_address(uboot_elf_path)
     # u-boot.elf : start_address = 0x04000000
