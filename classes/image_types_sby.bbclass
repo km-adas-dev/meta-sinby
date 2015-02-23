@@ -184,3 +184,5 @@ make_zynq_dos_image_sh() {
 }
 
 do_sinby_test[prefuncs] += "make_zynq_dos_image_sh make_zynq_dos_image"
+do_rootfs[depends] += "linux-xlnx:do_build"
+do_rootfs[depends] += "u-boot-xlnx:do_build"
