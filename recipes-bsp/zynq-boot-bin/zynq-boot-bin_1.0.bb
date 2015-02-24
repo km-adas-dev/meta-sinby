@@ -30,7 +30,8 @@ python do_deploy () {
     import os
     from py_bootgen.bootgen import BootGen
 
-    boot_bin = "${DEPLOY_DIR_IMAGE}/${ZYNQ_BOOT_BIN}"
+    boot_bin = "${DEPLOYDIR}/${ZYNQ_BOOT_BIN}"
+    #boot_bin = "${ZYNQ_BOOT_BIN}"
 
     fd = open(boot_bin, "wb")
 
@@ -43,12 +44,7 @@ python do_deploy () {
     system_bit_bin = system_bit_path + ".bin"
 
     uboot_elf_path = "${DEPLOY_DIR_IMAGE}/${ZYNQ_APP_ELF}"
-    uboot_elf_bin = uboot_elf_path + ".bin"
-    
-    #rv = os.system("arm-none-linux-gnueabi-objcopy -O binary %s %s" % (fsbl_zynq_elf_path, fsbl_zynq_elf_bin))
-    #if rv != 0 :
-    #    bb.error("I cannot convert from %s to %s" % (fsbl_zynq_elf_path, fsbl_zynq_elf_bin))
-    #    return
+    uboot_elf_bin = "${ZYNQ_APP_ELF}" + ".bin"
 
     objcopy = "${HOST_PREFIX}objcopy"
     cmd = "%s -O binary %s %s" % (objcopy, fsbl_zynq_elf_path, fsbl_zynq_elf_bin)
@@ -60,11 +56,6 @@ python do_deploy () {
     if rv == False :
         bb.fatal("bootgen.strip_bit failed from %s to %s" % (system_bit_path, system_bit_bin))
         return
-
-    #rv = os.system("arm-none-linux-gnueabi-objcopy -O binary %s %s" % (uboot_elf_path, uboot_elf_bin))
-    #if rv != 0 :
-    #    bb.error("I cannot convert from %s to %s" % (uboot_elf_path, uboot_elf_bin))
-    #    return
 
     cmd = "%s -O binary %s %s" % (objcopy, uboot_elf_path, uboot_elf_bin)
     (retval, output) = oe.utils.getstatusoutput(cmd)
@@ -78,6 +69,8 @@ python do_deploy () {
     bootgen.make_boot_bin(fsbl_zynq_elf_path, fsbl_zynq_elf_bin, system_bit_path, system_bit_bin, uboot_elf_path, uboot_elf_bin, start_address)
 
     fd.close()
+
+    #install ${ZYNQ_BOOT_BIN} ${DEPLOYDIR}/${ZYNQ_BOOT_BIN}
 }
 
 #do_my_task () {
