@@ -8,10 +8,14 @@ ZYNQ_SYSTEM_BIT ?= "file://system.bit"
 ZYNQ_APP_ELF ?= "u-boot.elf"
 ZYNQ_BOOT_BIN ?= "boot.bin"
 U_BOOT_FOR_BOOT_BIN ?= "u-boot-xlnx"
+
 inherit deploy
+
+DEPENDS = "u-boot-xlnx virtual/${HOST_PREFIX}binutils"
 
 do_deploy[dirs] += "${WORKDIR}"
 #do_deploy[depends] += "u-boot-xlnx:do_deploy"
+
 RDEPENDS_${PN} += "${U_BOOT_FOR_BOOT_BIN}"
 ZYNQ_FILES_PATH ?= "${TOPDIR}/files"
 

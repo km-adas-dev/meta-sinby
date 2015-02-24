@@ -1,6 +1,0 @@
-[submodule "lib/pyfat"]
-	path = lib/pyfat
-	url = git@github.com:ryos36/pyfat.git
-[submodule "lib/py_bootgen"]
-	path = lib/py_bootgen
-	url = git@github.com:ryos36/py_bootgen.git
