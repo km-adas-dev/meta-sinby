@@ -5,7 +5,8 @@ inherit image_types
 #
 
 # Boot partition size [in KiB]
-BOOT_SPACE ?= "8192"
+#BOOT_SPACE ?= "8192"
+BOOT_SPACE ?= "81920"
 
 # Set alignment to 4MB [in KiB]
 IMAGE_ROOTFS_ALIGNMENT = "4096"
@@ -15,7 +16,7 @@ IMAGE_DEPENDS_sdcard = "parted-native dosfstools-native mtools-native \
 
 SDCARD = "${DEPLOY_DIR_IMAGE}/${IMAGE_NAME}.rootfs.sdcard"
 
-MACHINE_DEVICETREE_DTB ?= "zc702_devicetree_hdmi.dtb"
+MACHINE_DEVICETREE_DTB ?= "zc702-zynq7.dtb"
 BOOT_BIN ?= "boot.bin"
 DEVICETREE_DTB_NAME ?= "devicetree.dtb"
 
@@ -28,7 +29,6 @@ IMAGE_CMD_sdcard () {
         bberror "SDCARD_ROOTFS is undefined."
         exit 1
     fi
-    bbwarn "hello"
 
     # Align boot partition and calculate total SD card image size
     BOOT_SPACE_ALIGNED=$(expr ${BOOT_SPACE} + ${IMAGE_ROOTFS_ALIGNMENT} - 1)
@@ -42,13 +42,17 @@ IMAGE_CMD_sdcard () {
     parted -s ${SDCARD} unit KiB mkpart primary $(expr  ${IMAGE_ROOTFS_ALIGNMENT} \+ ${BOOT_SPACE_ALIGNED}) $(expr ${IMAGE_ROOTFS_ALIGNMENT} \+ ${BOOT_SPACE_ALIGNED} \+ $ROOTFS_SIZE)
     parted ${SDCARD} print
 
+    #if [ ${DEPLOY_DIR_IMAGE}/${BOOT_BIN} ] ; then
+    #    rm ${DEPLOY_DIR_IMAGE}/${BOOT_BIN}
+    #end if
+
     BOOT_BLOCKS=$(LC_ALL=C parted -s ${SDCARD} unit b print \
                  | awk '/ 1 / { print substr($4, 1, length($4 -1)) / 1024 }')
     mkfs.vfat -n "${BOOTDD_VOLUME_ID}" -S 512 -C ${WORKDIR}/boot.img $BOOT_BLOCKS
     mcopy -i ${WORKDIR}/boot.img -s ${DEPLOY_DIR_IMAGE}/${BOOT_BIN} ::/${BOOT_BIN}
     mcopy -i ${WORKDIR}/boot.img -s ${DEPLOY_DIR_IMAGE}/${KERNEL_IMAGETYPE}-${MACHINE}.bin ::/${KERNEL_IMAGETYPE}
     echo mcopy -i ${WORKDIR}/boot.img -s ${DEPLOY_DIR_IMAGE}/${KERNEL_IMAGETYPE}-${MACHINE}.bin ::/${KERNEL_IMAGETYPE} > /tmp/jgeil.txt
-    mcopy -i ${WORKDIR}/boot.img -s ${DEPLOY_DIR_IMAGE}/${KERNEL_IMAGETYPE}-${MACHINE_DEVICETREE_DTB} ::/${DEVICETREE_DTB_NAME}
+    mcopy -i ${WORKDIR}/boot.img -s ${DEPLOY_DIR_IMAGE}/${MACHINE_DEVICETREE_DTB} ::/${DEVICETREE_DTB_NAME}
 
     for item in ${BOOT_SCRIPTS}; do
         src=`echo $item | awk -F':' '{ print $1 }'`
